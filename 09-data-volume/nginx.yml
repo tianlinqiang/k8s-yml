@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-pvc
+spec:
+  selector:
+    matchLabels:
+      app: nginx-pvc
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx-pvc
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:                        #挂载容器中的目录到pvc nfs中的目录
+        - name: www
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: www
+        persistentVolumeClaim:              #指定pvc
+          claimName: nginx-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-pvc
+  labels:
+    app: nginx-pvc
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: web              #容器端口或名字
+  selector:
+    app: nginx-pvc
